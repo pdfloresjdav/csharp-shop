@@ -1,10 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MongoDB.Driver;
 using ShopifySharp;
 using Test2.Models;
+using Test2.Controllers;
 
 namespace Test2
 {
@@ -29,8 +35,6 @@ namespace Test2
             services.AddSingleton(shopifyService);
 
             services.AddControllers();
-            
-
             // Create a new Shopify client.
             ShopifyClient shopifyClient = new ShopifyClient(shopifyUrl, shopifySecretToken);
 
@@ -64,6 +68,12 @@ namespace Test2
                 // Add the gif still image as a product image.
                 shopifyClient.ProductImages.Create(product.Id, gif.Images.Original.Url);
             }
+            services.AddSingleton<OrderWebhookController>();
+            services.AddSingleton<RewardPointsRepository>(new RewardPointsRepository(services.GetRequiredService<IMongoClient>()));
+            services.AddSingleton<OrdersController>();
+
+
+            
         }
 
         public void Configure(IApplicationBuilder app)
@@ -71,7 +81,7 @@ namespace Test2
             app.UseRouting();
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers();
+                endpoints.MapControllers("orders", "orders", new OrdersController());
             });
         }
     }
